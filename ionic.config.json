@@ -1,0 +1,8 @@
+{
+  "name": "NexTV",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react",
+  "id": "17661e6b"
+}

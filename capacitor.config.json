@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "NexTV",
+	"webDir": "build",
+	"bundledWebRuntime": false
+}
