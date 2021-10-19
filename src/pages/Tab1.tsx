@@ -2,34 +2,69 @@ import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from 
 import ExploreContainer from '../components/ExploreContainer';
 import './Tab1.css';
 import ReactPlayer from "react-player";
-import React from "react"
 import { VideoPlayer } from '@ionic-native/video-player';
-import { useEffect, useRef } from 'react';
+import React,{ useState,useEffect, useRef } from 'react';
 import screenfull from 'screenfull'
 import { findDOMNode } from 'react-dom'
 import { ScreenOrientation } from '@ionic-native/screen-orientation';
+import {firebaseConfig} from "../config/fire-config";
 
+import * as firebase from 'firebase/app';
+
+
+import {initializeFirestore,collection,doc,getDoc,onSnapshot} from 'firebase/firestore'
 
 const Tab1: React.FC = () => {
 
 
- alert(ScreenOrientation.type) 
+  useEffect(()=> {
+    if(window.navigator.onLine){
+      
+      initiaApp();
 
-useEffect(()=>{
-
-  ScreenOrientation.lock("landscape");
-})
-
-  alert(ScreenOrientation.type) 
+  //   const doc = firestore.Firestore.collection('live').doc("on");
   
-useEffect(()=>{
+   /*
+   doc.onSnapshot(
+    (docSnapshot:any) => {
+  
+          alert(docSnapshot.exists)
+          alert(docSnapshot.data().link)
+    }, (err:any) => {
+      console.log(`Encountered error: ${err}`);
+    },
+  
+    );*/
+  }
+  },[])
 
 
-  alert(ScreenOrientation.type) 
-},[ScreenOrientation.type])
+  const [link,setLink] = useState();
+
+  async function initiaApp(){
+    const fire = firebase.initializeApp(firebaseConfig);
+    const fr = initializeFirestore(fire,{});
+  
+    /*const citiesRef = collection(fr, "live");
+    const docRef = doc(fr, "live", "on");
+
+    const docSnap = await getDoc(docRef);
+   */
+
+      const unsub = onSnapshot(doc(fr, "live", "on"), (doc) => {
+
+          if(doc.exists()){
+
+            setLink(doc.data().link)
+        }
+
+      });
 
 
+  }
 
+
+/*
 let full = false;
 useEffect(()=>{
    /* const vp = VideoPlayer;
@@ -37,40 +72,66 @@ useEffect(()=>{
           console.log('video finished');
         }).catch(error => {
           console.log(error);
-        });*/
-        if(full){
+        });
+       
         if (screenfull.isEnabled) {
             console.log(ref2);
-            if(ref2.current !== null && ref2 !== null){
-                   // @ts-ignore: Object is possibly 'null'.
-                 screenfull.request(ref2.current.player.getInternalPlayer())
+            console.log("requisitou full")
+            if(ref2.current !== null){
+                   
                 //ref2.current.getInternalPlayer().requestScreenFullscreen()
                 // console.log(ref2.current.getInternalPlayer())
                 // console.log(ref2.current.player)
             }
         }
-      }else{
-        full = true;
-      }
-  },[])
+     
+  })
+*/
+let  ref2 = useRef(null);
+let  ref = useRef(null);
 
-  let  ref2 = useRef(null);
+useEffect(()=>{
+    console.log(ref2)
+    console.log(ref2.current)
+    // @ts-ignore: Object is possibly 'null'.
+
+    if(ref2.current.props.url !== undefined){
+      console.log("differente?")
+      setState(true)
+    }else{
+      console.log("null?")
+
+    }
+  },[ref2.current])
+
+  const [state,setState] = useState(false);
+
+  useEffect(()=>{
+    if(state)
+          console.log(ref2.current)
+        
+
+  },[state])
+
+    function chamaFullScreen(){
+      
+    screenfull.request(ref2.current.player.getInternalPlayer())
+  }
+ 
+
 
   return (
     <IonPage>
-
+      <IonButton  ref={ref}  onClick={chamaFullScreen}>FULL</IonButton>
         <ReactPlayer
-          url={'https://www.facebook.com/jovempannews/videos/1042444236558530'}
+          url={link}
           controls
           ref={ref2}
-          fullscreen={true}
-          resizeMode="cover"
           playing
           muted
+          fullscreen="true"
           width="100%"
-          height="100%"
-        />
-    
+          />
     </IonPage>
   );
 };
