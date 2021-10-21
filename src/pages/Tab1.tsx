@@ -1,7 +1,7 @@
 import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import ExploreContainer from '../components/ExploreContainer';
 import './Tab1.css';
-import ReactPlayer from "react-player";
+import ReactPlayer from "react-player/facebook";
 import { VideoPlayer } from '@ionic-native/video-player';
 import React,{ useState,useEffect, useRef } from 'react';
 import screenfull from 'screenfull'
@@ -47,7 +47,6 @@ const Tab1: React.FC = () => {
 {
 //Check if is immersive supported for instance
 await AndroidFullScreen.isImmersiveModeSupported().then((r: any) => {
-        alert(r);
     }).catch((error)=>alert(error))
 //Set display with AndroidSystemUiFlags
 //in my case to full screen but there is a ton of options
@@ -136,16 +135,16 @@ useEffect(()=>{
 
    
   return (
-    <IonPage>
+    <IonPage >
+      
         <ReactPlayer
           url={link}
-          controls
+          controls={false}
           ref={ref2}
           playing
-          
-          fullscreen="true"
-          width="100%"
+          fullscreen          
           />
+      
     </IonPage>
   );
 };
