@@ -143,6 +143,7 @@ useEffect(()=>{
           ref={ref2}
           playing
           fullscreen          
+          muted
           />
       
     </IonPage>
