@@ -1,7 +1,7 @@
 import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import ExploreContainer from '../components/ExploreContainer';
 import './Tab1.css';
-import ReactPlayer from "react-player/facebook";
+import ReactPlayer from "../react-player/facebook";
 import { VideoPlayer } from '@ionic-native/video-player';
 import React,{ useState,useEffect, useRef } from 'react';
 import screenfull from 'screenfull'
