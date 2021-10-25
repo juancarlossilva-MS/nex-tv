@@ -1,6 +1,9 @@
 {
-	"appId": "io.ionic.starter",
+	"appId": "nextv",
 	"appName": "NexTV",
 	"webDir": "build",
-	"bundledWebRuntime": false
+	"bundledWebRuntime": false,
+	"server": {
+		"url": "http://192.168.0.164:8100"
+	}
 }

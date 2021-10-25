@@ -12,26 +12,248 @@ import {firebaseConfig} from "../config/fire-config";
 import * as firebase from 'firebase/app';
 import { NavigationBar } from '@ionic-native/navigation-bar';
 import { AndroidFullScreen,AndroidSystemUiFlags } from '@ionic-native/android-full-screen';
+import { File,DirectoryEntry } from '@ionic-native/file';
 
 
 import {initializeFirestore,collection,doc,getDoc,onSnapshot} from 'firebase/firestore'
 
-const Tab1: React.FC = () => {
+const Tab1: React.FC =  () => {
 
-  function successFunction()
-  {
-    alert("It worked!");
+  
+
+
+  const getBase64FromUrl = async (url:any) => {
+    console.log(url)
+
+    const data = await fetch(url,{method:"get", headers:{"access-control-allow-origin" : "*"}});
+    const blob = await data.blob();
+    console.log(blob)
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob); 
+      reader.onloadend = () => {
+        const base64data = reader.result;
+        
+      // setImgSel(prev=>[...prev,base64data])
+          setVideos((prev:any) =>[...prev,base64data])
+           resolve(base64data);
+
+          //Abrindo a transação com a object store "contato"
+            var transaction = db.transaction('name', "readwrite");
+
+            // Quando a transação é executada com sucesso
+            transaction.oncomplete = function(event:any) {
+                console.log('Transação finalizada com sucesso.');
+            };
+
+            // Quando ocorre algum erro na transação
+            transaction.onerror = function(event:any) {
+                console.log('Transação finalizada com erro. Erro: ' + event.target.error);
+            };
+
+            //Recuperando a object store para incluir os registros
+            var store = transaction.objectStore('name');
+
+                var request = store.add(base64data,url);
+
+                //quando ocorrer um erro ao adicionar o registro
+                request.onerror = function (event:any) {
+                    console.log('Ocorreu um erro ao salvar o contato.');
+                }
+
+                //quando o registro for incluido com sucesso
+                request.onsuccess = function (event:any) {
+                    console.log('Contato salvo com sucesso.');
+                }
+            
+      }
+    });
   }
 
-    function errorFunction(error:any)
-    {
-      console.error(error);
+
+
+
+const [videos,setVideos] = useState([] as any);
+const [src,setSrc] = useState([]);
+const [db,setDb] = useState() as any;
+
+
+
+
+useEffect(()=>{
+    if(typeof window !== undefined){
+      console.log("entrou aqui")
+      console.log("indexou")
+      var request = window.indexedDB.open("DBteste",2);
+      request.onsuccess = async function (event:any) { 
+
+            setDb(event.target.result);
+            var transaction = event.target.result.transaction('name', "readwrite");
+            
+            
+              //Recuperando a object store para incluir os registros
+           var store = await transaction.objectStore('name').getAll();
+
+              store.onsuccess = function(e:any){
+                setVideos(store.result)
+                setSrc(store.result[0]);
+              }
+               /*  let vidArray = []
+              var todos = await transaction.objectStore('name').openCursor();
+              todos.onsuccess = function(event){
+                  let cursor = event.target.result;
+                  if (cursor) {
+                      vidArray.push({[cursor.primaryKey]:cursor.value});
+
+                    cursor.continue();
+                  }else{
+                    setVideos(vidArray);
+                    
+                    setSrc(vidArray[0][Object.keys(vidArray[0])[0]]);
+                  
+                  }
+
+               }*/
+                
+       }
+       
+
+      
+
+       window.addEventListener('offline', () => {
+  
+          console.log('Became offline');
+        
+          var transaction = db.transaction('name', "readwrite");
+        
+        
+          //Recuperando a object store para incluir os registros
+          var store = transaction.objectStore('name').getAll();
+          store.onsuccess = function(e:any){
+            
+            console.log(store.result)
+          }
+        
+          
+        });
+    
+        request.onerror = function (event) { 
+            //erro ao criar/abrir o banco de dados
+        }
+        
+        request.onupgradeneeded = function(event:any) {
+              
+                var  dbup = event.target.result;        
+                var store3 = dbup.createObjectStore("name", { autoIncrement: true });
+
+            }
     }
+},[])
 
-  function trace(value:any)
-  {
-  alert(value);
+
+var upLoad = false;
+
+
+
+
+
+
+
+useEffect(()=>{
+  if(window.navigator.onLine){
+    let arrayVideos = [] as any;
+    const unsub =  onSnapshot(collection(fr, "listvideos"), (doc:any) => {
+            doc.forEach((x:any) => {
+              console.log(x.id)
+              const url = "https://btgnews.com.br/videos/"+x.id+"?to=crop&r=256";
+              arrayVideos.push(url);
+          });
+     });
+     upLoad = true;
+  console.log(db)
+  if(db){
+        console.log("db on!!!")
+        var transaction = db.transaction('name', "readwrite");
+
+        var todos = transaction.objectStore('name').openCursor();
+
+        todos.onsuccess = function(event:any){
+                
+              
+                let cursor = event.target.result;
+                if (cursor) {
+                    let key = cursor.primaryKey;
+                    if(arrayVideos.includes(key)){
+                      console.log('TEEEM')
+                    }else{
+                      console.log("NÃÃÃÃO!")
+                      console.log(key)
+                      var store = transaction.objectStore('name').delete(key);
+
+                      store.onsuccess = function(event:any){
+                          var v = transaction.objectStore('name').getAll();
+                          v.onsuccess = function(e:any){
+                            
+                            setVideos(v.result)
+                            setSrc(v.result[0]);
+                          }
+                      }
+
+                    }
+                    /*let value = cursor.value;
+                    console.log(key, value);*/
+                    cursor.continue();
+                }
+            }
+              console.log(arrayVideos)
+            arrayVideos.forEach((url:any)=>{
+              console.log(url)
+              var store = transaction.objectStore('name').get(url);
+
+                store.onsuccess = async function(){
+                          if(store.result == undefined){
+                            const src = await getBase64FromUrl(url);
+                          }else{
+                            console.log("xxxx")
+                          }
+                }
+                store.onerror = function(){
+                          console.log("deu erro")
+                }
+            })
+
+        }else{
+          console.log("DB OFF, TÁ VENDO!")
+        }
+
+}
+
+},[db])
+
+
+
+const[index,setIndex] = useState(0);
+const myCallback = () => {
+  console.log('Video has ended')
+
+  setIndex(index+1);
+
+  if(index+1 >= videos.length){
+    setIndex(0);
+    setSrc(videos[0]);
+
+
+  }else{
+    setSrc(videos[index+1]);
+
   }
+  //ref.current.parentElement.play()
+}
+
+const ref = useRef();
+
+
+
 
   useEffect(()=> {
     
@@ -43,7 +265,9 @@ const Tab1: React.FC = () => {
    
   },[])
 
-  const AFS = async () => 
+
+
+const AFS = async () => 
 {
 //Check if is immersive supported for instance
 await AndroidFullScreen.isImmersiveModeSupported().then((r: any) => {
@@ -60,16 +284,10 @@ await AndroidFullScreen.setSystemUiVisibility(AndroidSystemUiFlags.HideNavigatio
 
 
   const [link,setLink] = useState();
+  const fire = firebase.initializeApp(firebaseConfig);
+  const fr = initializeFirestore(fire,{});
 
   async function initiaApp(){
-    const fire = firebase.initializeApp(firebaseConfig);
-    const fr = initializeFirestore(fire,{});
-  
-    /*const citiesRef = collection(fr, "live");
-    const docRef = doc(fr, "live", "on");
-
-    const docSnap = await getDoc(docRef);
-   */
 
       const unsub = onSnapshot(doc(fr, "live", "on"), (doc) => {
 
@@ -84,66 +302,92 @@ await AndroidFullScreen.setSystemUiVisibility(AndroidSystemUiFlags.HideNavigatio
   }
 
 
-/*
-let full = false;
-useEffect(()=>{
-   /* const vp = VideoPlayer;
-        vp.play('https://www.facebook.com/251460212193971/videos/570252257397877').then(() => {
-          console.log('video finished');
-        }).catch(error => {
-          console.log(error);
-        });
-       
-        if (screenfull.isEnabled) {
-            console.log(ref2);
-            console.log("requisitou full")
-            if(ref2.current !== null){
-                   
-                //ref2.current.getInternalPlayer().requestScreenFullscreen()
-                // console.log(ref2.current.getInternalPlayer())
-                // console.log(ref2.current.player)
-            }
-        }
-     
-  })
-*/
-let  ref2 = useRef(null);
-let  ref = useRef(null);
+/* -- JEITO CORDOVA DE SALVAR ARQUIVOS 
+getDir();
+async function getDir(){
 
-useEffect(()=>{
-    console.log(ref2)
-    console.log(ref2.current)
-    // @ts-ignore: Object is possibly 'null'.
-
-    if(ref2.current.props.url !== undefined){
-      console.log("differente?")
-      setState(true)
-    }else{
-      console.log("null?")
-
-    }
-  },[ref2.current])
-
-  const [state,setState] = useState(false);
-
-  useEffect(()=>{
-    if(state)
-          console.log(ref2.current)
+  var de = await File.resolveDirectoryUrl(File.externalDataDirectory);
+    File.getDirectory(de, 'NewDirInRoot/', { create: true }).then( function (dirEntry) {
+      dirEntry.getDirectory('images/', { create: true }, function (subDirEntry) {
         
+        //createFile(subDirEntry, "fileInNewSubDir.txt");
+        console.log(subDirEntry)
+        subDirEntry.getFile("newPersistentFile.txt", { create: true, exclusive: false }, function (fileEntry:any) {
 
-  },[state])
+              console.log("fileEntry is file?" + fileEntry.isFile.toString());
+              
+                console.log(subDirEntry)
+                console.log(fileEntry)
+                writeFile(fileEntry,"sera q sobrepoe? escreve isso la");
+                readFile(fileEntry)
+      
+
+          },errFunc)
+  
+        }, );
+    }, );
+}
+function errFunc(event:any){
+  console.log(event)
+  console.log("deu algum erro")
+}
+
+function readFile(fileEntry:any) {
+ // console.log(fileEntry)
+  fileEntry.file(function (file:any) {
+      var reader = new FileReader();
+      console.log(file)
+      reader.onloadend = function() {
+          console.log("Successful file read: " + this.result);
+      };
+
+      reader.readAsText(file);
+
+  });
+}
+
+
+function writeFile(fileEntry:any, dataObj:any) {
+ // console.log("tamo aki")
+
+      fileEntry.createWriter(function (fileWriter:any) {
+       //   console.log(fileWriter)
+          fileWriter.onwriteend = function (x:any) {
+              console.log(x)
+              
+          };
+          fileWriter.onerror = function (e:any) {
+              console.log(e)
+          };
+          fileWriter.write(dataObj);
+      });
+  
+}
+
+
+ File.listDir(File.externalDataDirectory, '').then(
+  (files) => {
+   console.log("entramos aqui")
+   console.log(File)
+   console.log(files)
+    
+    
+  }
+).catch(
+  (err) => {
+    console.log(err)
+  }
+)
+
+function onDeviceReady(){};
+
+--FORMA CORDOVA DE SALVAR ARQUIVOS -- */
 
    
   return (
     <IonPage >
-      
-        <ReactPlayer
-          url={link}
-          controls={false}
-          ref={ref2}
-          playing
-          fullscreen        
-          />
+      <p>TESTE</p>
+        
       
     </IonPage>
   );
