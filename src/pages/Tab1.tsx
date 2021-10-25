@@ -12,26 +12,14 @@ import {firebaseConfig} from "../config/fire-config";
 import * as firebase from 'firebase/app';
 import { NavigationBar } from '@ionic-native/navigation-bar';
 import { AndroidFullScreen,AndroidSystemUiFlags } from '@ionic-native/android-full-screen';
+import { File } from '@ionic-native/file';
 
 
 import {initializeFirestore,collection,doc,getDoc,onSnapshot} from 'firebase/firestore'
 
 const Tab1: React.FC = () => {
 
-  function successFunction()
-  {
-    alert("It worked!");
-  }
-
-    function errorFunction(error:any)
-    {
-      console.error(error);
-    }
-
-  function trace(value:any)
-  {
-  alert(value);
-  }
+  
 
   useEffect(()=> {
     
@@ -107,44 +95,31 @@ useEffect(()=>{
      
   })
 */
-let  ref2 = useRef(null);
-let  ref = useRef(null);
 
-useEffect(()=>{
-    console.log(ref2)
-    console.log(ref2.current)
-    // @ts-ignore: Object is possibly 'null'.
 
-    if(ref2.current.props.url !== undefined){
-      console.log("differente?")
-      setState(true)
-    }else{
-      console.log("null?")
 
-    }
-  },[ref2.current])
 
-  const [state,setState] = useState(false);
+ File.listDir(File.applicationStorageDirectory, '').then(
+  (files) => {
+   alert("entrou e deu certo"+files)
+    
+    
+  }
+).catch(
+  (err) => {
+    alert("entrou e deu errado"+err.message)
+  }
+)
 
-  useEffect(()=>{
-    if(state)
-          console.log(ref2.current)
-        
+function onDeviceReady(){};
 
-  },[state])
+
 
    
   return (
     <IonPage >
-      
-        <ReactPlayer
-          url={link}
-          controls={false}
-          ref={ref2}
-          playing
-          fullscreen          
-          muted
-          />
+      <p>TESTE</p>
+        
       
     </IonPage>
   );
