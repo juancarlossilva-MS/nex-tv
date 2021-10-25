@@ -142,8 +142,7 @@ useEffect(()=>{
           controls={false}
           ref={ref2}
           playing
-          fullscreen          
-          muted
+          fullscreen        
           />
       
     </IonPage>
