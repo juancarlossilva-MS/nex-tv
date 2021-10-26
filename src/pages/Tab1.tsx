@@ -25,14 +25,17 @@ const Tab1: React.FC =  () => {
   const getBase64FromUrl = async (url:any) => {
     console.log(url)
     const headers = new Headers();
-    headers.set('Access-Control-Allow-Origin', '*');
-    
+
+
     const init = {
         method: "get",
         headers
     };
-    const data = await fetch(url,init);
+    console.log("before feth")
+    const data = await fetch(url,{headers});
+    console.log("after fetch befor blob")
     const blob = await data.blob();
+    console.log("after blob")
     console.log(blob)
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -80,7 +83,7 @@ const Tab1: React.FC =  () => {
 
 
 const [videos,setVideos] = useState([] as any);
-const [src,setSrc] = useState([]);
+const [src,setSrc] = useState([] as any);
 const [db,setDb] = useState() as any;
 
 
@@ -136,8 +139,10 @@ useEffect(()=>{
           //Recuperando a object store para incluir os registros
           var store = transaction.objectStore('name').getAll();
           store.onsuccess = function(e:any){
-            
-            console.log(store.result)
+     
+                          setVideos(store.result)
+                          setSrc(store.result[0]);
+                       
           }
         
           
@@ -156,6 +161,12 @@ useEffect(()=>{
     }
 },[])
 
+useEffect(()=>{
+  
+  if(src == undefined){
+    setSrc(videos[0])
+  }
+},[videos])
 
 var upLoad = false;
 
@@ -177,9 +188,11 @@ useEffect(()=>{
   console.log(db)
   if(db){
 
-  let arrayVideos = [] as any;
-   const result = onSnapshot(collection(fr, "listvideos"), async(doc:any) => {
-           doc.forEach((x:any) => {
+    const result = onSnapshot(collection(fr, "listvideos"), async (doc:any) => {
+      
+      let arrayVideos = [] as any;
+
+           await doc.forEach((x:any) => {
               console.log(x.id)
               const url = "https://btgnews.com.br/videos/"+x.id+"?to=crop&r=256";
               console.log(url)
@@ -199,11 +212,13 @@ useEffect(()=>{
               let cursor = event.target.result;
               if (cursor) {
                   let key = cursor.primaryKey;
+                  console.log("key"+key)
+                  console.log(arrayVideos)
                   if(arrayVideos.includes(key)){
                     console.log('TEEEM')
                   }else{
-                    console.log("NÃÃÃÃO!")
-                    console.log(key)
+                     console.log("NÃÃÃÃO!")
+                     console.log(key)
                     var store = transaction.objectStore('name').delete(key);
 
                     store.onsuccess = function(event:any){
@@ -219,27 +234,28 @@ useEffect(()=>{
                   /*let value = cursor.value;
                   console.log(key, value);*/
                   cursor.continue();
+              }else{
+                arrayVideos.forEach((url:any)=>{
+                  console.log("url")
+                  var store = transaction.objectStore('name').get(url);
+                    
+                    store.onsuccess = async function(){
+                              if(store.result == undefined){
+                                const src = await getBase64FromUrl(url);
+                              }else{
+                                console.log("xxxx")
+                              }
+                    }
+                    store.onerror = function(){
+                              console.log("deu erro")
+                    }
+                })
               }
           }
 
            
             
-           arrayVideos.forEach((url:any)=>{
-             console.log("url")
-            console.log(url)
-            var store = transaction.objectStore('name').get(url);
-
-              store.onsuccess = async function(){
-                        if(store.result == undefined){
-                          const src = await getBase64FromUrl(url);
-                        }else{
-                          console.log("xxxx")
-                        }
-              }
-              store.onerror = function(){
-                        console.log("deu erro")
-              }
-          })
+           
 
         });
 
@@ -253,7 +269,8 @@ useEffect(()=>{
 const[index,setIndex] = useState(0);
 const myCallback = () => {
   console.log('Video has ended')
-
+  console.log(index)
+  console.log(videos.length)
   setIndex(index+1);
 
   if(index+1 >= videos.length){
@@ -262,6 +279,7 @@ const myCallback = () => {
 
 
   }else{
+    console.log(index)
     setSrc(videos[index+1]);
 
   }
@@ -289,7 +307,7 @@ const AFS = async () =>
 {
 //Check if is immersive supported for instance
 await AndroidFullScreen.isImmersiveModeSupported().then((r: any) => {
-    }).catch((error)=>alert(error))
+    }).catch((error)=>console.log(error))
 //Set display with AndroidSystemUiFlags
 //in my case to full screen but there is a ton of options
 //As the android documentation shows if u want a fullscreen app you should use three
@@ -401,11 +419,42 @@ function onDeviceReady(){};
 
 --FORMA CORDOVA DE SALVAR ARQUIVOS -- */
 
-   
+
+function carregou(e:any){
+
+  var vh = e.nativeEvent.srcElement.clientHeight
+  var vw = e.nativeEvent.srcElement.clientWidth
+
+  
+  var width = Math.floor(vw*window.innerHeight/vh);
+  var margin = ((window.innerWidth - width)/2);
+
+  e.nativeEvent.srcElement.style.marginLeft = margin+"px";
+  e.nativeEvent.srcElement.style.width = width+"px";
+  e.nativeEvent.srcElement.style.height = window.innerHeight+"px";
+
+
+}
+
+const Video = () =>{
+  if(link){
+    return(<ReactPlayer
+        url={link}
+        playing
+        muted
+
+    />)
+  }else{
+    return(
+      <video onLoadedData={carregou}  onEnded={() => myCallback()} autoPlay={true}  controls muted>    
+          <source  src={src} type="video/mp4"/>
+      </video>
+    )
+  }
+}
   return (
     <IonPage >
-      <p>TESTE</p>
-        
+        <Video/>
       
     </IonPage>
   );
