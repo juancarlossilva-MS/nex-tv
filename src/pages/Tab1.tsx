@@ -24,8 +24,14 @@ const Tab1: React.FC =  () => {
 
   const getBase64FromUrl = async (url:any) => {
     console.log(url)
-
-    const data = await fetch(url,{method:"get", headers:{"access-control-allow-origin" : "*"}});
+    const headers = new Headers();
+    headers.set('Access-Control-Allow-Origin', '*');
+    
+    const init = {
+        method: "get",
+        headers
+    };
+    const data = await fetch(url,init);
     const blob = await data.blob();
     console.log(blob)
     return new Promise((resolve) => {
@@ -161,75 +167,87 @@ var upLoad = false;
 
 useEffect(()=>{
   if(window.navigator.onLine){
-    let arrayVideos = [] as any;
-    const unsub =  onSnapshot(collection(fr, "listvideos"), (doc:any) => {
-            doc.forEach((x:any) => {
-              console.log(x.id)
-              const url = "https://btgnews.com.br/videos/"+x.id+"?to=crop&r=256";
-              arrayVideos.push(url);
-          });
-     });
-     upLoad = true;
-  console.log(db)
-  if(db){
-        console.log("db on!!!")
-        var transaction = db.transaction('name', "readwrite");
-
-        var todos = transaction.objectStore('name').openCursor();
-
-        todos.onsuccess = function(event:any){
-                
-              
-                let cursor = event.target.result;
-                if (cursor) {
-                    let key = cursor.primaryKey;
-                    if(arrayVideos.includes(key)){
-                      console.log('TEEEM')
-                    }else{
-                      console.log("NÃÃÃÃO!")
-                      console.log(key)
-                      var store = transaction.objectStore('name').delete(key);
-
-                      store.onsuccess = function(event:any){
-                          var v = transaction.objectStore('name').getAll();
-                          v.onsuccess = function(e:any){
-                            
-                            setVideos(v.result)
-                            setSrc(v.result[0]);
-                          }
-                      }
-
-                    }
-                    /*let value = cursor.value;
-                    console.log(key, value);*/
-                    cursor.continue();
-                }
-            }
-              console.log(arrayVideos)
-            arrayVideos.forEach((url:any)=>{
-              console.log(url)
-              var store = transaction.objectStore('name').get(url);
-
-                store.onsuccess = async function(){
-                          if(store.result == undefined){
-                            const src = await getBase64FromUrl(url);
-                          }else{
-                            console.log("xxxx")
-                          }
-                }
-                store.onerror = function(){
-                          console.log("deu erro")
-                }
-            })
-
-        }else{
-          console.log("DB OFF, TÁ VENDO!")
-        }
-
-}
+      preencheDb()
+  }
 
 },[db])
 
+ async function preencheDb(){
+
+  console.log(db)
+  if(db){
+
+  let arrayVideos = [] as any;
+   const result = onSnapshot(collection(fr, "listvideos"), async(doc:any) => {
+           doc.forEach((x:any) => {
+              console.log(x.id)
+              const url = "https://btgnews.com.br/videos/"+x.id+"?to=crop&r=256";
+              console.log(url)
+              arrayVideos.push(url);
+          });
+          
+
+          console.log(result)
+        upLoad = true;
+            console.log("db on!!!")
+
+      var transaction = db.transaction('name', "readwrite");
+      var todos = transaction.objectStore('name').openCursor();
+      todos.onsuccess = async function(event:any){
+              
+            
+              let cursor = event.target.result;
+              if (cursor) {
+                  let key = cursor.primaryKey;
+                  if(arrayVideos.includes(key)){
+                    console.log('TEEEM')
+                  }else{
+                    console.log("NÃÃÃÃO!")
+                    console.log(key)
+                    var store = transaction.objectStore('name').delete(key);
+
+                    store.onsuccess = function(event:any){
+                        var v = transaction.objectStore('name').getAll();
+                        v.onsuccess = function(e:any){
+                          
+                          setVideos(v.result)
+                          setSrc(v.result[0]);
+                        }
+                    }
+
+                  }
+                  /*let value = cursor.value;
+                  console.log(key, value);*/
+                  cursor.continue();
+              }
+          }
+
+           
+            
+           arrayVideos.forEach((url:any)=>{
+             console.log("url")
+            console.log(url)
+            var store = transaction.objectStore('name').get(url);
+
+              store.onsuccess = async function(){
+                        if(store.result == undefined){
+                          const src = await getBase64FromUrl(url);
+                        }else{
+                          console.log("xxxx")
+                        }
+              }
+              store.onerror = function(){
+                        console.log("deu erro")
+              }
+          })
+
+        });
+
+      }else{
+        console.log("DB OFF, TÁ VENDO!")
+      }
+
+}
 
 
 const[index,setIndex] = useState(0);
