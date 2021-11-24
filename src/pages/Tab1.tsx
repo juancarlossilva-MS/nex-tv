@@ -194,7 +194,7 @@ useEffect(()=>{
 
            await doc.forEach((x:any) => {
               console.log(x.id)
-              const url = "https://btgnews.com.br/videos/"+x.id+"?to=crop&r=256";
+              const url = "https://btgnews.tv.br/videos/"+x.id+"?to=crop&r=256";
               console.log(url)
               arrayVideos.push(url);
           });
